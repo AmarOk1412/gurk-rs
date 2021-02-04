@@ -7,7 +7,6 @@ pub use profile::Profile;
 pub use profilemanager::ProfileManager;
 pub use transfermanager::TransferManager;
 
-use crate::util::Event;
 use account::Account;
 
 use dbus::blocking::Connection;
@@ -24,6 +23,27 @@ use std::{thread, time};
  * Connect to the jami daemon
  */
 pub struct Jami {}
+
+#[derive(Debug)]
+pub enum Event<I> {
+    Input(I),
+    Message {
+        account_id: String,
+        conversation_id: String,
+        payloads: HashMap<String, String>,
+    },
+    ConversationReady(String, String),
+    ConversationRemoved(String, String),
+    ConversationRequest(String, String),
+    RegistrationStateChanged(String, String),
+    ProfileReceived(String, String, String),
+    RegisteredNameFound(String, u64, String, String),
+    AccountsChanged(),
+    ConversationLoaded(u32, String, String, Vec<HashMap<String, String>>),
+    DataTransferEvent(String, String, u64, i32),
+    IncomingTrustRequest(String, String, Vec<u8>, u64),
+    Resize,
+}
 
 #[derive(PartialEq)]
 pub enum ImportType {

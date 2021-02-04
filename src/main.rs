@@ -4,8 +4,7 @@ mod jami;
 mod ui;
 mod util;
 
-use crate::jami::Jami;
-use crate::util::*;
+use crate::jami::{Event, Jami};
 use app::App;
 
 use crossterm::{
