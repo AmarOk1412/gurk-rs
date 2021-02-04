@@ -1,10 +1,9 @@
 mod app;
 mod appdata;
-mod jami;
 mod ui;
 mod util;
 
-use crate::jami::{Event, Jami};
+use jami_rs::{Event, Jami};
 use app::App;
 
 use crossterm::{
