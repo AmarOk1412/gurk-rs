@@ -129,28 +129,6 @@ impl Message {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
-#[derive(Debug)]
-pub enum Event<I> {
-    Input(I),
-    Message {
-        account_id: String,
-        conversation_id: String,
-        payloads: HashMap<String, String>,
-    },
-    ConversationReady(String, String),
-    ConversationRemoved(String, String),
-    ConversationRequest(String, String),
-    RegistrationStateChanged(String, String),
-    ProfileReceived(String, String, String),
-    RegisteredNameFound(String, u64, String, String),
-    AccountsChanged(),
-    ConversationLoaded(u32, String, String, Vec<HashMap<String, String>>),
-    DataTransferEvent(String, String, u64, i32),
-    IncomingTrustRequest(String, String, Vec<u8>, u64),
-    Resize,
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct StatefulList<T> {
     #[serde(skip)]

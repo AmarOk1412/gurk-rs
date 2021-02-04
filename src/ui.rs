@@ -10,6 +10,7 @@ use tui::Frame;
 use unicode_width::UnicodeWidthStr;
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+    // [Constraint::Ratio(1, 4), Constraint::Ratio(5, 8), Constraint::Ratio(1, 8)] if members
     let chunks = Layout::default()
         .constraints([Constraint::Ratio(1, 4), Constraint::Ratio(3, 4)].as_ref())
         .direction(Direction::Horizontal)

@@ -410,10 +410,9 @@ dependencies = [
  "base64 0.12.3",
  "chrono",
  "crossterm",
- "dbus",
- "dbus-tokio",
  "dirs",
  "itertools",
+ "jami-rs",
  "log",
  "rusqlite",
  "scopeguard",
@@ -426,6 +425,22 @@ dependencies = [
  "toml",
  "tui",
  "unicode-width",
+]
+
+[[package]]
+name = "jami-rs"
+version = "0.1.0"
+source = "git+https://github.com/AmarOk1412/jami-rs?branch=main#106162f8ef7d771b252f34003d612d4f409c7a2a"
+dependencies = [
+ "app_dirs",
+ "dbus",
+ "dbus-tokio",
+ "dirs",
+ "log",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

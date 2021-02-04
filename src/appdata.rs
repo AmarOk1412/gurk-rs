@@ -1,8 +1,8 @@
-use crate::jami::account::Account;
-use crate::jami::{Jami, ProfileManager, TransferManager};
 use crate::util::*;
 
 use chrono::Utc;
+use jami_rs::account::Account;
+use jami_rs::{Jami, ProfileManager, TransferManager};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{self, BufRead};

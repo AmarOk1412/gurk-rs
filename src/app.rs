@@ -1,12 +1,12 @@
 use crate::appdata::AppData;
-use crate::jami::account::Account;
-use crate::jami::{ImportType, Jami};
 use crate::util::*;
 
 use app_dirs::{get_app_dir, AppDataType, AppInfo};
-use dirs;
 use chrono::{TimeZone, Utc};
 use crossterm::event::KeyCode;
+use dirs;
+use jami_rs::{ImportType, Jami};
+use jami_rs::account::Account;
 use unicode_width::UnicodeWidthStr;
 
 use std::collections::HashMap;
