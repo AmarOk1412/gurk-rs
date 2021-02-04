@@ -520,8 +520,25 @@ impl App {
                     } else if payloads.get("type").unwrap() == "application/data-transfer+json" {
                         let tid = payloads.get("tid").unwrap_or(&String::new()).clone();
                         let display_name = payloads.get("displayName").unwrap_or(&String::new()).clone();
+
+                        let mut status = String::from("not downloaded");
+                        let info = Jami::data_transfer_info(account_id.clone(), conversation_id.clone(), tid.parse::<u64>().unwrap_or(0));
+                        if !info.is_none() {
+                            status = match info.unwrap().last_event {
+                                3  => String::from("awaiting peer"),
+                                4  => String::from("awaiting host"),
+                                5  => String::from("ongoing"),
+                                6  => String::from("finished"),
+                                7  => String::from("closed by host"),
+                                8  => String::from("closed by peer"),
+                                10 => String::from("unjoinable peer"),
+                                11 => String::from("timeout expired"),
+                                _  => String::from("not downaloaded"),
+                            };
+                        }
+    
                         let message = match self.data.transfer_manager.path(account_id.clone(), conversation_id.clone(), tid.clone()) {
-                            None => format!("<New file transfer with id: {} - {} - not downloaded>", tid, display_name),
+                            None => format!("<New file transfer with id: {} - {} - {}>", tid, display_name, status),
                             Some(path) => format!("<file://{}>", path),
                         };
                         channel.messages.push(Message::new(
@@ -700,20 +717,27 @@ impl App {
         tid: u64,
         status: i32
     ) -> Option<()> {
-        if status == 6 /* Finished */ {
-            let info = Jami::data_transfer_info(account_id.clone(), conversation_id.clone(), tid);
-            if !info.is_none() {
-                println!("{}", status);
-                self.data.transfer_manager.set_file_path(account_id.clone(), conversation_id.clone(), tid.to_string(), info.unwrap().path);
+        let info = Jami::data_transfer_info(account_id.clone(), conversation_id.clone(), tid);
+        if !info.is_none() {
+            let info = info.unwrap();
+            match self.data.transfer_manager.path(account_id.clone(), conversation_id.clone(), tid.to_string()) {
+                None => {
+                    if info.flags == 0 /* outgoing */ {
+                        self.data.transfer_manager.set_file_path(account_id.clone(), conversation_id.clone(), tid.to_string(), info.path);
+                    } else if status == 6 /* Finished */ {
+                        self.data.transfer_manager.set_file_path(account_id.clone(), conversation_id.clone(), tid.to_string(), info.path);
+                    }
+                },
+                _ => {},
+            };
 
-                // Note: bad perf there but for now I don't care, will fix this when necessary
-                if account_id == &*self.data.account.id {
-                    if let Some(idx) = self.data.channels.state.selected() {
-                        let channel = &mut self.data.channels.items[idx];
-                        if channel.id == conversation_id {
-                            channel.messages.clear();
-                            Jami::load_conversation(&self.data.account.id, &channel.id, &String::new(), 0);
-                        }
+            // Note: bad perf there but for now I don't care, will fix this when necessary
+            if account_id == &*self.data.account.id {
+                if let Some(idx) = self.data.channels.state.selected() {
+                    let channel = &mut self.data.channels.items[idx];
+                    if channel.id == conversation_id {
+                        channel.messages.clear();
+                        Jami::load_conversation(&self.data.account.id, &channel.id, &String::new(), 0);
                     }
                 }
             }
