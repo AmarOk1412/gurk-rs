@@ -1,4 +1,5 @@
 use crate::App;
+use crate::util::Role;
 
 use chrono::Timelike;
 use tui::backend::Backend;
@@ -10,11 +11,25 @@ use tui::Frame;
 use unicode_width::UnicodeWidthStr;
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
-    // [Constraint::Ratio(1, 4), Constraint::Ratio(5, 8), Constraint::Ratio(1, 8)] if members
-    let chunks = Layout::default()
-        .constraints([Constraint::Ratio(1, 4), Constraint::Ratio(3, 4)].as_ref())
-        .direction(Direction::Horizontal)
-        .split(f.size());
+    let has_members = app
+        .data
+        .channels
+        .state
+        .selected()
+        .and_then(|idx| app.data.channels.items.get(idx))
+        .map(|channel| !channel.members.is_empty())
+        .unwrap_or(false);
+
+    let chunks = match has_members {
+        false => Layout::default()
+                    .constraints([Constraint::Ratio(1, 4), Constraint::Ratio(3, 4)].as_ref())
+                    .direction(Direction::Horizontal)
+                    .split(f.size()),
+        true => Layout::default()
+                    .constraints([Constraint::Ratio(1, 4), Constraint::Ratio(5, 8), Constraint::Ratio(1, 8)].as_ref())
+                    .direction(Direction::Horizontal)
+                    .split(f.size())
+    };
 
     let channel_list_width = chunks[0].width.saturating_sub(2) as usize;
     let channels: Vec<ListItem> = app
@@ -50,6 +65,9 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     f.render_stateful_widget(channels, chunks[0], &mut app.data.channels.state);
 
     draw_chat(f, app, chunks[1]);
+    if has_members {
+        draw_members(f, app, chunks[2]);
+    }
 }
 
 fn draw_chat<B: Backend>(f: &mut Frame<B>, app: &mut App, area: Rect) {
@@ -198,6 +216,58 @@ fn draw_messages<B: Backend>(f: &mut Frame<B>, app: &App, area: Rect) {
         )
         .style(Style::default().fg(Color::White))
         .start_corner(Corner::BottomLeft);
+    f.render_widget(list, area);
+}
+
+fn draw_members<B: Backend>(f: &mut Frame<B>, app: &App, area: Rect) {
+    let members = app
+        .data
+        .channels
+        .state
+        .selected()
+        .and_then(|idx| app.data.channels.items.get(idx))
+        .map(|channel| &channel.members[..])
+        .unwrap_or(&[]);
+
+    let max_lines = area.height;
+
+    let present_style = Style::default().fg(Color::White);
+    let absent_style = Style::default().fg(Color::Red);
+    let members = members
+        .iter()
+        .rev()
+        // we can't show more members atm and don't have members navigation
+        .take(max_lines as usize)
+        .map(|member| {
+            let present = app.data.tracked_presences.get(&member.hash);
+            let style = match present {
+                Some(true) => present_style,
+                _ => absent_style,
+            };
+            let role = match member.role {
+                Role::Admin => String::from("👑"),
+                Role::Member => String::from("-"),
+                Role::Invited => String::from("⏳"),
+            };
+
+            let name = app.data.profile_manager.display_name(&member.hash);
+            let uri = Span::styled(
+                format!("{} {}", role, name),
+                style,
+            );
+
+            uri
+        });
+
+    let items: Vec<_> = members.map(|s| ListItem::new(Text::from(s))).collect();
+
+    let list = List::new(items)
+        .block(
+            Block::default()
+                .borders(Borders::ALL),
+        )
+        .style(Style::default().fg(Color::White))
+        .start_corner(Corner::TopLeft);
     f.render_widget(list, area);
 }
 

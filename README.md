@@ -33,6 +33,9 @@ To run this project you will need:
   + Show synchronized call messages and file transfers
   + Support swarm modes (1:1, admin invites only, invites only, public)
 + Room titles
++ Presence tracking
++ Member lists
++ Data transfer
 
 ## Missing features but wanted
 

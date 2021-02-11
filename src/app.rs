@@ -184,6 +184,7 @@ impl App {
                         .push(Message::info(String::from("Invalid account id.")));
                 } else {
                     //  TODO avoid duplicate code
+                    self.untrack_current_conversation();
                     self.data.account = account;
                     self.data
                         .profile_manager
@@ -590,6 +591,10 @@ impl App {
                                 arrived_at,
                             ));
                         }
+                        channel.members = AppData::get_conversations_members(account_id, &conversation_id);
+                        for member in &*channel.members {
+                            Jami::subscribe_presence(&self.data.account.id, &member.hash, true);
+                        }
                     } else {
                         channel.messages.push(Message::new(
                             author,
@@ -616,6 +621,15 @@ impl App {
     ) {
         if registration_state == "REGISTERED" && self.data.account == Account::null() {
             self.data.account = Jami::select_jami_account(false);
+        }
+    }
+
+    /**
+     * On presence changed for a member
+     */
+    pub async fn on_member_presence_changed(&mut self, account_id: &String, uri: &String, flag: bool) {
+        if self.data.account.id == *account_id {
+            self.data.tracked_presences.insert(uri.to_string(), flag);
         }
     }
 
@@ -789,6 +803,7 @@ impl App {
             if let Some(idx) = self.data.channels.state.selected() {
                 let channel = &mut self.data.channels.items[idx];
                 if channel.id == conversation_id {
+                    self.untrack_current_conversation();
                     self.data.channels.state.select(Some(0));
                 }
             }
@@ -918,34 +933,49 @@ impl App {
 
     // direct interactions
 
-    /**
-     * On key up
-     */
-    pub fn on_up(&mut self) {
+    fn untrack_current_conversation(&mut self) {
+        if let Some(idx) = self.data.channels.state.selected() {
+            let channel = &mut self.data.channels.items[idx];
+            for member in &*channel.members {
+                Jami::subscribe_presence(&self.data.account.id, &member.hash, false);
+            }
+        }
+    }
+
+    fn change_conversation(&mut self, next: bool) {
         self.reset_unread_messages();
-        self.data.channels.previous();
+        self.untrack_current_conversation();
+
+        if next {
+            self.data.channels.next();
+        } else {
+            self.data.channels.previous();
+        }
+
         if let Some(idx) = self.data.channels.state.selected() {
             let channel = &mut self.data.channels.items[idx];
             if channel.channel_type == ChannelType::Group {
                 channel.messages.clear();
                 Jami::load_conversation(&self.data.account.id, &channel.id, &String::new(), 0);
             }
+            for member in &*channel.members {
+                Jami::subscribe_presence(&self.data.account.id, &member.hash, true);
+            }
         }
+    }
+
+    /**
+     * On key up
+     */
+    pub fn on_up(&mut self) {
+        self.change_conversation(false);
     }
 
     /**
      * On key down
      */
     pub fn on_down(&mut self) {
-        self.reset_unread_messages();
-        self.data.channels.next();
-        if let Some(idx) = self.data.channels.state.selected() {
-            let channel = &mut self.data.channels.items[idx];
-            if channel.channel_type == ChannelType::Group {
-                channel.messages.clear();
-                Jami::load_conversation(&self.data.account.id, &channel.id, &String::new(), 0);
-            }
-        }
+        self.change_conversation(true);
     }
 
     /**

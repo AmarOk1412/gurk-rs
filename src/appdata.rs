@@ -4,6 +4,7 @@ use chrono::Utc;
 use jami_rs::account::Account;
 use jami_rs::{Jami, ProfileManager, TransferManager};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead};
 
@@ -13,6 +14,7 @@ pub struct AppData {
     pub account: Account,
     pub profile_manager: ProfileManager,
     pub transfer_manager: TransferManager,
+    pub tracked_presences: HashMap<String, bool>,
     #[serde(skip)]
     pub out_invite: Vec<OutgoingInvite>,
     #[serde(skip)]
@@ -84,24 +86,32 @@ impl AppData {
 
         // Get conversations
         for conversation in Jami::get_conversations(&account.id) {
-            let members_from_daemon = Jami::get_members(&account.id, &conversation);
-            let mut members = Vec::new();
-            for member in members_from_daemon {
-                let role: Role;
-                if member["role"].to_string() == "admin" {
-                    role = Role::Admin;
-                } else {
-                    role = Role::Member;
-                }
-                let hash = member["uri"].to_string();
-                members.push(Member { hash, role })
-            }
             let mut channel = Channel::new(&conversation, ChannelType::Group);
             let new_infos = Jami::get_conversation_infos(&account.id, &conversation);
+            channel.members = AppData::get_conversations_members(&account.id, &conversation);
             channel.update_infos(new_infos);
             channels.push(channel);
         }
         channels
+    }
+
+    // Retrieve conversation members
+    pub fn get_conversations_members(account_id: &String, conversation: &String) -> Vec<Member> {
+        let members_from_daemon = Jami::get_members(account_id, &conversation);
+        let mut members = Vec::new();
+        for member in members_from_daemon {
+            let role: Role;
+            if member["role"].to_string() == "admin" {
+                role = Role::Admin;
+            } else if member["role"].to_string() == "invited" {
+                role = Role::Invited;
+            } else {
+                role = Role::Member;
+            }
+            let hash = member["uri"].to_string();
+            members.push(Member { hash, role })
+        }
+        members
     }
 
     // Init self
@@ -128,6 +138,7 @@ impl AppData {
             out_invite: Vec::new(),
             pending_rm: Vec::new(),
             input_cursor: 0,
+            tracked_presences: HashMap::new(),
             account,
         })
     }

@@ -25,6 +25,7 @@ pub struct PendingRm {
 pub enum Role {
     Member,
     Admin,
+    Invited,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

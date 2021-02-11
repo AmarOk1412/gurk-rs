@@ -123,6 +123,10 @@ async fn main() -> anyhow::Result<()> {
                 app.on_incoming_trust_request(&account_id, &from, payload, receive_time)
                     .await;
             }
+            Some(Event::MemberPresenceChanged(account_id, uri, flag)) => {
+                app.on_member_presence_changed(&account_id, &uri, flag)
+                    .await;
+            }
             Some(Event::AccountsChanged()) => {
                 app.on_accounts_changed().await;
             }
