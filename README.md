@@ -18,6 +18,24 @@ To run this project you will need:
 + Run `jami-cli`
 + Enjoy!
 
+## Update August 2024
+
+Many Dbus API calls are not up to date. But `send_message` and `send-file` have been updated to work with latest versions of Jami as of August 2024. 
+
+For example, on Fedora 40 do this to install:
+
++ `sudo dnf install dbus-devel pkgconf-pkg-config sqlite3 sqlite-devel # install as prerequisite for jami-cli jami-rs`
++ `sudo dnf-3 config-manager --add-repo https://dl.jami.net/stable/fedora_40/jami-stable.repo # add Jami repo to dnf`
++ `sudo dnf install jami-daemon # install the Jami daemon jamid`
++ `/usr/libexec/jamid -p & # start the daemon jamid`
+
+To run:
+
++ clone `jami-rs` repo and `jami-cli` repo
++ compile with `cargo`
++ don't forget that the `jamid` daemon must be running, see above
++ run `jami-cli`
+
 ## Features
 
 + Manage accounts (add/remove/link/import/change settings)

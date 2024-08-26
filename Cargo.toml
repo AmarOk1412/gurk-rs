@@ -1,7 +1,7 @@
 [package]
 name = "jami-cli"
 description = "Jami client for terminal"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Sébastien Blin <amarok@enconn.fr>"]
 edition = "2018"
 keywords = ["jami", "tui"]
@@ -32,5 +32,5 @@ tokio = { version = "0.2.22", features = ["full"] }
 toml = "0.5.6"
 tui = { version = "0.12.0", default-features = false, features = ["crossterm"] }
 unicode-width = "0.1.8"
-jami-rs = "0.2.0"
-#jami-rs = { git = "https://github.com/AmarOk1412/jami-rs", branch="main" }
+#jami-rs = "0.3.0"
+jami-rs = { git = "https://github.com/8go/jami-rs", branch="main" }
