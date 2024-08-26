@@ -314,7 +314,7 @@ impl App {
             } else if message.starts_with("/send ") {
                 let parts: Vec<&str> = message.split(" ").collect();
                 let path = parts.get(1).unwrap_or(&"").to_string();
-                Jami::send_file(account_id.to_string(), channel.id.clone(), path);
+                Jami::send_file(&account_id.to_string(), &channel.id.clone(), &path, &path, &String::new());
                 show_msg = false;
             } else if message.starts_with("/accept ") {
                 let parts: Vec<&str> = message.split(" ").collect();
@@ -341,7 +341,7 @@ impl App {
                                 break;
                             }
                             idx += 1;
-                        } 
+                        }
                     }
                 }
                 if !path.is_empty() {
@@ -386,7 +386,8 @@ impl App {
                     .push(Message::info(String::from("/exit: quit")));
             } else {
                 show_msg = false;
-                Jami::send_conversation_message(&account_id, &channel.id, &message, &String::new());
+                let flag = 0; /* not a reply, not an edit, just a single msg */
+                Jami::send_message(&account_id, &channel.id, &message, &String::new(), &flag);
             }
         } else if is_invite || is_trust_request {
             let account_id = &self.data.account.id;
@@ -522,7 +523,8 @@ impl App {
                         let tid = payloads.get("tid").unwrap_or(&String::new()).clone();
                         let display_name = payloads.get("displayName").unwrap_or(&String::new()).clone();
 
-                        let mut status = String::from("not downloaded");
+                        let mut status = String::from("sent");
+                        /* Todo: data_transfer_info does not exist anymore in dbus API, will always return None */
                         let info = Jami::data_transfer_info(account_id.clone(), conversation_id.clone(), tid.parse::<u64>().unwrap_or(0));
                         if !info.is_none() {
                             status = match info.unwrap().last_event {
@@ -534,10 +536,10 @@ impl App {
                                 8  => String::from("closed by peer"),
                                 10 => String::from("unjoinable peer"),
                                 11 => String::from("timeout expired"),
-                                _  => String::from("not downaloaded"),
+                                _  => String::from("not downloaded"),
                             };
                         }
-    
+
                         let message = match self.data.transfer_manager.path(account_id.clone(), conversation_id.clone(), tid.clone()) {
                             None => format!("<New file transfer with id: {} - {} - {}>", tid, display_name, status),
                             Some(path) => format!("<file://{}>", path),
